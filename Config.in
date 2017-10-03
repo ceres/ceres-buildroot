@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_CERES_PATH/package/ceres-cfg/Config.in"
+source "$BR2_EXTERNAL_CERES_PATH/package/ceres-templates-interfaces/Config.in"
