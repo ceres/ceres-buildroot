@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-CERES_CFG_VERSION = dev-buildroot
+CERES_CFG_VERSION = master
 CERES_CFG_SITE = git://github.com/ceres/ceres-cfg.git
 CERES_CFG_SITE_METHOD = git
 
