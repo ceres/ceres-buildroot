@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_CERES_PATH/package/ceres-cfg/Config.in"

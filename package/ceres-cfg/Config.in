@@ -1,0 +1,9 @@
+config BR2_PACKAGE_CERES_CFG
+	bool "ceres-cfg"
+	select BR2_PACKAGE_PYTHON3
+	select BR2_PACKAGE_PYTHON_FLASK
+	select BR2_PACKAGE_PYTHON_REQUESTS
+	help
+	  ceres-cfg is the Ceres configuration system.
+
+	  https://ceres.github.io/
