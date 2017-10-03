@@ -1,0 +1,6 @@
+config BR2_PACKAGE_BIRD6
+	bool "bird6"
+	help
+	  BIRD Internet Routing Daemon (IPv6).
+
+	  http://bird.network.cz/

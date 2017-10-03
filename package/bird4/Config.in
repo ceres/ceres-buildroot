@@ -1,0 +1,6 @@
+config BR2_PACKAGE_BIRD4
+	bool "bird4"
+	help
+	  BIRD Internet Routing Daemon (IPv4).
+
+	  http://bird.network.cz/
