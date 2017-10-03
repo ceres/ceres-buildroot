@@ -1,0 +1,11 @@
+config BR2_PACKAGE_CERES_TEMPLATES_INTERFACES
+	bool "ceres-templates-interfaces"
+	select BR2_PACKAGE_CERES_CFG
+	select BR2_PACKAGE_IPROUTE2
+	select BR2_PACKAGE_NET_TOOLS
+	select BR2_PACKAGE_BRIDGE_UTILS
+	help
+	  ceres-templates-interfaces contain core templates
+	  for manipulating ethernet/loopback/VRF interfaces.
+
+	  https://ceres.github.io/
