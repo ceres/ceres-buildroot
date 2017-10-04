@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sudo make all -f $2/scripts/Makefile.filesystem BINARIES_DIR=$1
