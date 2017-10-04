@@ -1,7 +1,0 @@
-config BR2_PACKAGE_CERES_ENV_OVERLAY
-	bool "ceres-env-overlay"
-	help
-	  ceres-env-overlay contains files that are overlayed
-	  onto the ceres-base filesystem during build.
-
-	  https://ceres.github.io/

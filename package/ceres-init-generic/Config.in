@@ -1,0 +1,6 @@
+config BR2_PACKAGE_CERES_INIT_GENERIC
+	bool "ceres-init-generic"
+	help
+	  ceres-init-generic is a lightweight initramfs.
+
+	  https://ceres.github.io/

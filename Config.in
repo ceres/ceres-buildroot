@@ -1,5 +1,4 @@
 source "$BR2_EXTERNAL_CERES_PATH/package/ceres-cfg/Config.in"
-source "$BR2_EXTERNAL_CERES_PATH/package/ceres-env-overlay/Config.in"
 source "$BR2_EXTERNAL_CERES_PATH/package/ceres-templates-interfaces/Config.in"
 
 source "$BR2_EXTERNAL_CERES_PATH/package/bird4/Config.in"
