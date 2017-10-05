@@ -4,6 +4,7 @@ STAGING_IMAGE_SIZE?=64M
 
 SQUASH_IMAGE?=${BINARIES_DIR}/rootfs.squashfs
 KERNEL_IMAGE?=${BINARIES_DIR}/bzImage
+INITRAMFS_IMAGE?=${TARGET_DIR}/boot/ceres-init.cpio.gz
 BOOTLOADER_IMAGE=${HOST_DIR}/usr/share/syslinux/mbr.bin
 
 MOUNT_DIR_BOOT?=/mnt/ceres-partition-boot
@@ -39,13 +40,13 @@ preflight:
 postflight:
 	$(call progress_out,Postflight)
 	rm -rf $(STAGING_DIR)
-	tar -C $(shell dirname $(STAGING_IMAGE))/ -cJf $(STAGING_IMAGE).tar.xz $(shell basename $(STAGING_IMAGE))
+#	tar -C $(shell dirname $(STAGING_IMAGE))/ -cJf $(STAGING_IMAGE).tar.xz $(shell basename $(STAGING_IMAGE))
 	qemu-img convert -O vmdk $(STAGING_IMAGE) $(STAGING_IMAGE).vmdk
 
 complete:
 	$(call success_out,Build complete)
 	@echo "Standard image at $(STAGING_IMAGE)"
-	@echo "Compressed image at $(STAGING_IMAGE).tar.xz"
+#	@echo "Compressed image at $(STAGING_IMAGE).tar.xz"
 	@echo "VMware VMDK image at $(STAGING_IMAGE).vmdk"
 	@echo "Squashfs file at $(SQUASH_IMAGE)"
 
@@ -92,8 +93,8 @@ mount-lo:
 unmount-lo:
 	$(call progress_out,Unmount disk image ${STAGING_IMAGE})
 	ls -Rlarth $(MOUNT_DIR_BOOT)
-	umount -d $(MOUNT_DIR_BOOT)
 	ls -Rlarth $(MOUNT_DIR_PERSIST)
+	umount -d $(MOUNT_DIR_BOOT)
 	umount -d $(MOUNT_DIR_PERSIST)
 	sleep 1
 	rm -rf $(MOUNT_DIR_BOOT)
@@ -113,7 +114,7 @@ bootloader:
 	echo "" >> $(STAGING_DIR)/boot/extlinux.conf; \
 	echo "label linux" >> $(STAGING_DIR)/boot/extlinux.conf; \
 	echo "kernel /bzImage" >> $(STAGING_DIR)/boot/extlinux.conf; \
-#	echo "initrd /ceres-init.cpio.gz" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "initrd /ceres-init.cpio.gz" >> $(STAGING_DIR)/boot/extlinux.conf; \
 	echo "append root=/dev/sda2 rootfstype=squashfs ro" >> $(STAGING_DIR)/boot/extlinux.conf; \
 	extlinux --install $(MOUNT_DIR_BOOT) --device=$(LOOP)p1; \
 	dd if=$(BOOTLOADER_IMAGE) of=$(LOOP) conv=notrunc; \
@@ -121,6 +122,7 @@ bootloader:
 system-stage:
 	$(call progress_out,Copy kernel and squashfs into ${STAGING_IMAGE})
 	cp $(KERNEL_IMAGE) $(MOUNT_DIR_BOOT)/bzImage
+	cp $(INITRAMFS_IMAGE) $(MOUNT_DIR_BOOT)/ceres-init.cpio.gz
 	cp -r $(STAGING_DIR)/boot/* $(MOUNT_DIR_BOOT)/
 	dd if=$(SQUASH_IMAGE) of=$(LOOP)p2
 	rm -rf $(STAGING_DIR)/boot
