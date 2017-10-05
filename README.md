@@ -12,7 +12,7 @@ git clone https://github.com/ceres/ceres-buildroot/
 
 Then navigate into your `buildroot` folder and load the default `ceres-buildroot` configuration:
 ```
-make defconfig BR2_DEFCONFIG=~/ceres-buildroot/configs/buildroot_defconfig
+make defconfig BR2_DEFCONFIG=~/ceres-buildroot/configs/ceres_generic_defconfig
 ```
 
 Configure your build to your target platform:
