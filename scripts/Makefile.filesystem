@@ -4,12 +4,10 @@ STAGING_IMAGE_SIZE?=64M
 
 SQUASH_IMAGE?=${BINARIES_DIR}/rootfs.squashfs
 KERNEL_IMAGE?=${BINARIES_DIR}/bzImage
-BOOTLOADER_IMAGE=${BINARIES_DIR}/syslinux/isolinux.bin
+BOOTLOADER_IMAGE=${HOST_DIR}/usr/share/syslinux/mbr.bin
 
 MOUNT_DIR_BOOT?=/mnt/ceres-partition-boot
 MOUNT_DIR_PERSIST?=/mnt/ceres-partition-persist
-
-TARGET_ARCH=i386
 
 RELEASE=$(shell cat metadata/release)
 VERSION=$(shell cat metadata/version)
@@ -27,18 +25,15 @@ define error_out
 	 @echo "\033[1;91m*** $(1) ***\033[0m"
 endef
 
-build: preflight prepare-image mount-lo mount-special initramfs bootloader unmount-special squash-stage unmount-lo postflight complete
+build: preflight prepare-image mount-lo mount-special initramfs bootloader unmount-special system-stage unmount-lo postflight complete
 
 all: build
+	$(call success_out,Finished)
 	$(call progress_out,Binary dir ${BINARIES_DIR})
-#	make build || make error
 
 preflight:
 	$(call progress_out,Preflight)
 	mkdir -p $(STAGING_DIR)
-	mkdir -p $(STAGING_DIR)/proc
-	mkdir -p $(STAGING_DIR)/dev
-	mkdir -p $(STAGING_DIR)/sys
 	mkdir -p $(STAGING_DIR)/boot
 
 postflight:
@@ -54,11 +49,14 @@ complete:
 	@echo "VMware VMDK image at $(STAGING_IMAGE).vmdk"
 	@echo "Squashfs file at $(SQUASH_IMAGE)"
 
-error:
+error: clean
 	$(call error_out,Build failed)
 
 mount-special:
 	$(call progress_out,Mount special filesystems in ${STAGING_DIR})
+	mkdir -p $(STAGING_DIR)/proc
+	mkdir -p $(STAGING_DIR)/dev
+	mkdir -p $(STAGING_DIR)/sys
 	mount --bind /proc $(STAGING_DIR)/proc
 	mount --bind /dev $(STAGING_DIR)/dev
 	mount --bind /sys $(STAGING_DIR)/sys
@@ -68,6 +66,9 @@ unmount-special:
 	umount -f $(STAGING_DIR)/proc
 	umount -f $(STAGING_DIR)/dev
 	umount -f $(STAGING_DIR)/sys
+	rm -rf $(STAGING_DIR)/proc
+	rm -rf $(STAGING_DIR)/dev
+	rm -rf $(STAGING_DIR)/sys
 
 prepare-image:
 	$(call progress_out,Prepare disk image ${STAGING_IMAGE})
@@ -90,45 +91,39 @@ mount-lo:
 
 unmount-lo:
 	$(call progress_out,Unmount disk image ${STAGING_IMAGE})
+	ls -Rlarth $(MOUNT_DIR_BOOT)
 	umount -d $(MOUNT_DIR_BOOT)
+	ls -Rlarth $(MOUNT_DIR_PERSIST)
 	umount -d $(MOUNT_DIR_PERSIST)
 	sleep 1
 	rm -rf $(MOUNT_DIR_BOOT)
 	rm -rf $(MOUNT_DIR_PERSIST)
 
 initramfs:
-	$(call progress_out,Run Stage 4)
-	$(call progress_out,Install ceres-initrd)
+#	$(call progress_out,Install ceres-init-generic)
 #	rm -rf $(STAGING_DIR)/tmp/ceres-init-generic
 #	git clone --depth 1 https://github.com/ceres/ceres-init-generic.git $(STAGING_DIR)/tmp/ceres-init-generic || true
 #	chroot $(STAGING_DIR) bash -c "cd /tmp/ceres-init-generic/; rm -rf .git; make install"
 
 bootloader:
 	$(call progress_out,Configure bootloader)
-	if [ "$(TARGET_ARCH)" = "amd64" ] || [ "$(TARGET_ARCH)" = "i386" ]; \
-	then \
-		echo "default linux" > $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "prompt 0" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "timeout 0" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "label linux" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "kernel /bzImage" >> $(STAGING_DIR)/boot/extlinux.conf; \
-#		echo "initrd /ceres-init.cpio.gz" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		echo "append root=/dev/sda2 rootfstype=squashfs ro" >> $(STAGING_DIR)/boot/extlinux.conf; \
-		mkdir -p $(MOUNT_DIR_BOOT)/boot; \
-		extlinux --install $(MOUNT_DIR_BOOT)/boot --device=$(LOOP)p1; \
-		dd if=$(KERNEL_IMAGE) of=$(LOOP) conv=notrunc; \
-	fi
+	echo "default linux" > $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "prompt 0" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "timeout 0" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "label linux" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "kernel /bzImage" >> $(STAGING_DIR)/boot/extlinux.conf; \
+#	echo "initrd /ceres-init.cpio.gz" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	echo "append root=/dev/sda2 rootfstype=squashfs ro" >> $(STAGING_DIR)/boot/extlinux.conf; \
+	extlinux --install $(MOUNT_DIR_BOOT) --device=$(LOOP)p1; \
+	dd if=$(BOOTLOADER_IMAGE) of=$(LOOP) conv=notrunc; \
 
-squash-stage:
-	$(call progress_out,Copy squashfs into ${STAGING_IMAGE})
+system-stage:
+	$(call progress_out,Copy kernel and squashfs into ${STAGING_IMAGE})
 	cp $(KERNEL_IMAGE) $(MOUNT_DIR_BOOT)/bzImage
 	cp -r $(STAGING_DIR)/boot/* $(MOUNT_DIR_BOOT)/
 	dd if=$(SQUASH_IMAGE) of=$(LOOP)p2
 	rm -rf $(STAGING_DIR)/boot
-	rm -rf $(STAGING_DIR)/proc
-	rm -rf $(STAGING_DIR)/dev
-	rm -rf $(STAGING_DIR)/sys
 
 clean:
 	$(call progress_out,Unmount special filesystems and loopbacks)
