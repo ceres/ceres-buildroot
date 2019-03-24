@@ -74,7 +74,7 @@ unmount-special:
 prepare-image:
 	$(call progress_out,Prepare disk image ${STAGING_IMAGE})
 	touch $(STAGING_IMAGE)
-	fallocate -l ${STAGING_IMAGE_SIZE} $(STAGING_IMAGE)
+	fallocate -l ${STAGING_IMAGE_SIZE} $(STAGING_IMAGE) || dd if=/dev/zero of=$(STAGING_IMAGE) bs=1M seek=${STAGING_IMAGE_SIZE} count=0
 	$(call progress_out,Partition disk image ${STAGING_IMAGE})
 	parted -s $(STAGING_IMAGE) -- mklabel msdos mkpart primary ext4 1m 17m mkpart primary 17m 49m mkpart primary 49m 100% toggle 1 boot
 	modprobe loop
